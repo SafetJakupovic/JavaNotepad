@@ -3,6 +3,7 @@ package function;
 import java.awt.FileDialog;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import main.GUI;
 
 /**
@@ -20,6 +21,8 @@ public class FunctionFile {
   public void newFile() {
     gui.textArea.setText("");
     gui.window.setTitle("New");
+    fileName = null;
+    filePath = null;
   }
 
   public void openFile() {
@@ -44,5 +47,42 @@ public class FunctionFile {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
+  }
+
+  public void saveFile() {
+    if (fileName == null)
+      saveAsFile();
+
+    try {
+      FileWriter fw = new FileWriter(filePath + fileName);
+      fw.write(gui.textArea.getText());
+      gui.window.setTitle(fileName);
+      fw.close();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void saveAsFile() {
+    FileDialog fd = new FileDialog(gui.window, "Save", FileDialog.SAVE);
+    fd.setVisible(true);
+
+    if (fd.getFile() != null) {
+      fileName = fd.getFile();
+      filePath = fd.getDirectory();
+      gui.window.setTitle(fileName);
+    }
+
+    try {
+      FileWriter fw = new FileWriter(filePath + fileName);
+      fw.write(gui.textArea.getText());
+      fw.close();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void Exit() {
+    System.exit(0);
   }
 }
