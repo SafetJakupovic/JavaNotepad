@@ -1,7 +1,9 @@
 package main;
 
+import function.FunctionEdit;
 import function.FunctionFile;
 import function.FunctionFormat;
+import function.KeyHandler;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,6 +15,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.undo.UndoManager;
 
 public class GUI implements ActionListener {
   public JFrame window;
@@ -22,9 +27,11 @@ public class GUI implements ActionListener {
   JScrollPane scrollPane;
   // TOP MENU BAR
   JMenuBar menuBar;
-  JMenu menuFile, menuEdit, menuFormat, menuColor;
+  public JMenu menuFile, menuEdit, menuFormat, menuColor;
   // FILE MENU
   JMenuItem iNew, iOpen, iSave, iSaveAs, iExit;
+  // EDIT MENU
+  JMenuItem iUndo, iRedo;
   // FORMAT MENU
   public JMenuItem iWordWrap;
   JMenu menuFont, menuFontSize;
@@ -32,12 +39,14 @@ public class GUI implements ActionListener {
   JMenuItem iFontSize8, iFontSize12, iFontSize16, iFontSize20, iFontSize24,
       iFontSize28;
 
-  FunctionFile file = new FunctionFile(this);
-  FunctionFormat format = new FunctionFormat(this);
+  public UndoManager um = new UndoManager();
+  public KeyHandler kHandler = new KeyHandler(this);
 
-  public static void main(String[] args) {
-    new GUI();
-  }
+  public FunctionFile file = new FunctionFile(this);
+  public FunctionFormat format = new FunctionFormat(this);
+  public FunctionEdit edit = new FunctionEdit(this);
+
+  public static void main(String[] args) { new GUI(); }
 
   public GUI() {
     try {
@@ -49,8 +58,9 @@ public class GUI implements ActionListener {
     createTextArea();
     createMenuBar();
     createFileItem();
+    createEditMenu();
     createFormatMenu();
-    format.selectedFont = "Monospaced";
+    format.selectedFont = "Arial";
     format.createFont(16);
     window.setVisible(true);
   }
@@ -63,8 +73,15 @@ public class GUI implements ActionListener {
 
   public void createTextArea() {
     textArea = new JTextArea();
-    scrollPane = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-        JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    textArea.addKeyListener(kHandler);
+    textArea.getDocument().addUndoableEditListener(new UndoableEditListener() {
+      public void undoableEditHappened(UndoableEditEvent e) {
+        um.addEdit(e.getEdit());
+      }
+    });
+    scrollPane =
+        new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                        JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
     window.add(scrollPane);
   }
@@ -168,59 +185,78 @@ public class GUI implements ActionListener {
     menuFontSize.add(iFontSize28);
   }
 
+  public void createEditMenu() {
+    iUndo = new JMenuItem("Undo");
+    iUndo.addActionListener(this);
+    iUndo.setActionCommand("Undo");
+    menuEdit.add(iUndo);
+
+    iRedo = new JMenuItem("Redo");
+    iRedo.addActionListener(this);
+    iRedo.setActionCommand("Redo");
+    menuEdit.add(iRedo);
+  }
+
   @Override
   public void actionPerformed(ActionEvent e) {
     String command = e.getActionCommand();
 
     switch (command) {
-      case "New":
-        file.newFile();
-        break;
-      case "Open":
-        file.openFile();
-        break;
-      case "Save":
-        file.saveFile();
-        break;
-      case "SaveAs":
-        file.saveAsFile();
-        break;
-      case "Exit":
-        file.Exit();
-        break;
+    case "New":
+      file.newFile();
+      break;
+    case "Open":
+      file.openFile();
+      break;
+    case "Save":
+      file.saveFile();
+      break;
+    case "SaveAs":
+      file.saveAsFile();
+      break;
+    case "Exit":
+      file.Exit();
+      break;
 
-      case "WordWrap":
-        format.wordWrap();
-        break;
-      case "Arial":
-        format.setFont(command);
-        break;
-      case "ComicSans":
-        format.setFont(command);
-        break;
-      case "TimesNewRoman":
-        format.setFont(command);
-        break;
-      case "size8":
-        format.createFont(8);
-        break;
-      case "size12":
-        format.createFont(12);
-        break;
-      case "size16":
-        format.createFont(16);
-        break;
-      case "size20":
-        format.createFont(20);
-        break;
-      case "size24":
-        format.createFont(24);
-        break;
-      case "size28":
-        format.createFont(28);
-        break;
-      default:
-        break;
+    case "WordWrap":
+      format.wordWrap();
+      break;
+    case "Arial":
+      format.setFont(command);
+      break;
+    case "ComicSans":
+      format.setFont(command);
+      break;
+    case "TimesNewRoman":
+      format.setFont(command);
+      break;
+    case "size8":
+      format.createFont(8);
+      break;
+    case "size12":
+      format.createFont(12);
+      break;
+    case "size16":
+      format.createFont(16);
+      break;
+    case "size20":
+      format.createFont(20);
+      break;
+    case "size24":
+      format.createFont(24);
+      break;
+    case "size28":
+      format.createFont(28);
+      break;
+
+    case "Undo":
+      edit.undo();
+      break;
+    case "Redo":
+      edit.redo();
+      break;
+    default:
+      break;
     }
   }
 }
